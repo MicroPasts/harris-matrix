@@ -1,0 +1,39 @@
+{
+  "name": "@micropasts/harris-matrix",
+  "version": "0.1.0",
+  "description": "Zero-dependency JavaScript Web Components for rendering interactive archaeological Harris Matrices (stratigraphic contexts, phases, and relationships) with Shadow DOM and Tailwind CSS support.",
+  "type": "module",
+  "main": "./dist/harris-matrix.esm.js",
+  "module": "./dist/harris-matrix.esm.js",
+  "unpkg": "./dist/harris-matrix.iife.js",
+  "jsdelivr": "./dist/harris-matrix.iife.js",
+  "exports": {
+    ".": {
+      "import": "./dist/harris-matrix.esm.js",
+      "default": "./src/index.js"
+    },
+    "./core": "./src/core.js",
+    "./shadow": "./src/shadow.js",
+    "./tailwind": "./src/tailwind.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node scripts/build.js",
+    "dev": "npm run build && npx serve docs",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "harris-matrix",
+    "stratigraphy",
+    "archaeology",
+    "contexts",
+    "web-components",
+    "tailwindcss",
+    "micropasts"
+  ],
+  "license": "MIT"
+}

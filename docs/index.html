@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@micropasts/harris-matrix — Stratigraphic Matrix Demo</title>
+  <script>
+    (function () {
+      const saved = localStorage.getItem('hm-demo-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+  <style>
+    :root {
+      --hm-fg: #18181b;
+      --hm-muted: #52525b;
+      --hm-node-bg: #ffffff;
+    }
+    html.dark {
+      --hm-fg: #f4f4f5;
+      --hm-muted: #a1a1aa;
+      --hm-node-bg: #27272a;
+    }
+    harris-matrix.custom-hm {
+      --hm-border: #d97706;
+      --hm-radius: 0.375rem;
+    }
+  </style>
+</head>
+<body class="bg-stone-50 text-stone-900 dark:bg-zinc-950 dark:text-zinc-100 min-h-screen transition-colors">
+  <div class="max-w-5xl mx-auto px-6 py-10 space-y-10">
+
+    <header class="flex flex-wrap items-start justify-between gap-4 border-b border-stone-200 dark:border-zinc-800 pb-6">
+      <div>
+        <div class="text-xs font-mono uppercase tracking-wider text-sky-700 dark:text-sky-400 mb-1">
+          @micropasts/harris-matrix · Stratigraphic Sequence
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight text-stone-900 dark:text-zinc-100">Interactive Harris Matrix</h1>
+        <p class="text-sm text-stone-600 dark:text-zinc-400 mt-1.5 max-w-2xl">
+          Click any archaeological context to trace later/earlier stratigraphic links, filter by phase, or use the CSV-to-JSON helper below.
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="toggle-helper" type="button"
+          class="rounded-md border border-sky-600/40 bg-sky-600/10 text-sky-800 dark:text-sky-300 px-3 py-1.5 text-xs font-medium hover:bg-sky-600/20">
+          Matrix JSON Helper
+        </button>
+        <button id="theme-toggle" type="button"
+          class="rounded-md border border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-stone-800 dark:text-zinc-200 px-3 py-1.5 text-xs font-medium hover:bg-stone-100 dark:hover:bg-zinc-800">
+          Toggle Dark Mode
+        </button>
+      </div>
+    </header>
+
+    <section class="space-y-3">
+      <h2 class="text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-zinc-400">
+        1. Tailwind CSS Light-DOM (&lt;harris-matrix-tw&gt;)
+      </h2>
+      <harris-matrix-tw id="demo-matrix-tw">
+        <script type="application/json">
+          {
+            "contexts": [
+              { "id": "101", "label": "Context 101", "type": "topsoil", "phase": "Modern", "description": "Ploughsoil and modern turf layer." },
+              { "id": "102", "label": "Context 102", "type": "demolition", "phase": "Post-Medieval", "description": "Rubble spread sealing stone wall footing." },
+              { "id": "103", "label": "Context 103", "type": "wall", "phase": "Medieval", "description": "Mortared flint and limestone foundation wall." },
+              { "id": "104", "label": "Context 104", "type": "pit fill", "phase": "Medieval", "description": "Dark charcoal-rich backfill containing medieval sherds." },
+              { "id": "105", "label": "Context 105", "type": "cut", "phase": "Medieval", "description": "Sub-rectangular pit cut truncating Roman floor." },
+              { "id": "106", "label": "Context 106", "type": "floor", "phase": "Roman", "description": "Opus signinum / mortar surface." },
+              { "id": "107", "label": "Context 107", "type": "natural", "phase": "Natural", "description": "Undisturbed Chiltern clay-with-flints subsoil." }
+            ],
+            "edges": [
+              { "above": "101", "below": "102" },
+              { "above": "102", "below": "103" },
+              { "above": "102", "below": "104" },
+              { "above": "104", "below": "105" },
+              { "above": "103", "below": "106" },
+              { "above": "105", "below": "106" },
+              { "above": "106", "below": "107" }
+            ]
+          }
+        </script>
+      </harris-matrix-tw>
+    </section>
+
+    <section id="helper-drawer" class="hidden rounded-xl border border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 class="text-sm font-semibold text-stone-900 dark:text-zinc-100">CSV / Context Sheet → Matrix JSON Helper</h2>
+          <p class="text-xs text-stone-600 dark:text-zinc-400">
+            Use <code class="font-mono">|</code> or <code class="font-mono">;</code> for multiple IDs in <code class="font-mono">above</code> (later contexts) or <code class="font-mono">below</code> (earlier contexts).
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="apply-matrix-json" type="button"
+            class="rounded border border-sky-600 bg-sky-600 text-white px-3 py-1 text-xs font-medium hover:bg-sky-700">
+            Render in Matrix Above
+          </button>
+          <button id="copy-matrix-json" type="button"
+            class="rounded border border-stone-300 dark:border-zinc-700 px-3 py-1 text-xs font-medium hover:bg-stone-100 dark:hover:bg-zinc-800">
+            Copy JSON
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="space-y-1.5">
+          <label for="csv-input" class="block text-[11px] font-mono uppercase text-stone-500 dark:text-zinc-400">
+            Context Rows (CSV)
+          </label>
+          <textarea id="csv-input" rows="9"
+            class="w-full rounded-lg border border-stone-300 dark:border-zinc-700 bg-stone-50 dark:bg-zinc-950 p-2.5 font-mono text-xs text-stone-900 dark:text-zinc-100">id,label,type,phase,above,below,description
+301,Context 301,layer,Post-Medieval,,302,Upper garden loam
+302,Context 302,wall,Medieval,301,303|304,Ashlar wall footing
+303,Context 303,pit fill,Medieval,302,305,Silty fill in cut 305
+304,Context 304,floor,Roman,302,306,Pebble yard surface
+305,Context 305,cut,Medieval,303,306,Pit cut into yard
+306,Context 306,natural,Natural,304|305,,Natural chalk gravel</textarea>
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="json-output" class="block text-[11px] font-mono uppercase text-stone-500 dark:text-zinc-400">
+            Generated Matrix JSON
+          </label>
+          <textarea id="json-output" rows="9" readonly
+            class="w-full rounded-lg border border-stone-300 dark:border-zinc-700 bg-stone-50 dark:bg-zinc-950 p-2.5 font-mono text-xs text-stone-900 dark:text-zinc-100"></textarea>
+        </div>
+      </div>
+
+      <div id="helper-warnings" class="text-xs text-amber-700 dark:text-amber-400 space-y-1"></div>
+    </section>
+
+    <section class="space-y-3">
+      <h2 class="text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-zinc-400">
+        2. Shadow DOM Version (&lt;harris-matrix&gt;)
+      </h2>
+      <harris-matrix id="demo-matrix-shadow" class="custom-hm">
+        <script type="application/json">
+          {
+            "contexts": [
+              { "id": "201", "label": "Context 201", "type": "layer", "phase": "Roman", "description": "Occupation silt over hearth." },
+              { "id": "202", "label": "Context 202", "type": "hearth", "phase": "Roman", "description": "Ash and burnt clay hearth lining." },
+              { "id": "203", "label": "Context 203", "type": "subsoil", "phase": "Natural", "description": "Base gravel deposit." }
+            ],
+            "edges": [
+              { "above": "201", "below": "202" },
+              { "above": "202", "below": "203" }
+            ]
+          }
+        </script>
+      </harris-matrix>
+    </section>
+
+  </div>
+
+  <script type="module">
+    import { csvToMatrix, copyTextToClipboard } from './harris-matrix.esm.js';
+
+    const drawer = document.getElementById('helper-drawer');
+    const toggleHelper = document.getElementById('toggle-helper');
+    const csvInput = document.getElementById('csv-input');
+    const jsonOutput = document.getElementById('json-output');
+    const warningsEl = document.getElementById('helper-warnings');
+    const applyBtn = document.getElementById('apply-matrix-json');
+    const copyBtn = document.getElementById('copy-matrix-json');
+    const targetMatrix = document.getElementById('demo-matrix-tw');
+
+    let latestMatrix = null;
+
+    function syncHelper() {
+      const parsed = csvToMatrix(csvInput.value);
+      latestMatrix = { contexts: parsed.contexts, edges: parsed.edges };
+      jsonOutput.value = JSON.stringify(latestMatrix, null, 2);
+      warningsEl.innerHTML = parsed.warnings.length
+        ? parsed.warnings.map((w) => `<div>⚠ ${w}</div>`).join('')
+        : '<div class="text-emerald-700 dark:text-emerald-400">✓ Valid stratigraphic structure (no cycles or missing context IDs).</div>';
+    }
+
+    toggleHelper.addEventListener('click', () => {
+      drawer.classList.toggle('hidden');
+      if (!drawer.classList.contains('hidden')) syncHelper();
+    });
+
+    csvInput.addEventListener('input', syncHelper);
+
+    applyBtn.addEventListener('click', () => {
+      if (!latestMatrix) syncHelper();
+      targetMatrix._rawData = latestMatrix;
+      targetMatrix._selectedId = null;
+      targetMatrix._phaseFilter = 'ALL';
+      targetMatrix.render();
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      if (!latestMatrix) syncHelper();
+      const ok = await copyTextToClipboard(jsonOutput.value);
+      if (ok) {
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy JSON';
+        }, 1200);
+      }
+    });
+
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('hm-demo-theme', isDark ? 'dark' : 'light');
+    });
+
+    syncHelper();
+  </script>
+</body>
+</html>
